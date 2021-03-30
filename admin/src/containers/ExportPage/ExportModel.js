@@ -6,7 +6,6 @@ import { HFlex, ModelItem } from "./ui-components";
 import JsonDataDisplay from "../../components/JsonDataDisplay";
 import * as FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
-const xl = require('excel4node');
 
 const ExportModel = ({ model }) => {
   const [fetching, setFetching] = useState(false);
@@ -21,44 +20,24 @@ const ExportModel = ({ model }) => {
   };
 
   const downloadXl = () => {
-    const wb = new xl.Workbook();
-    const ws = wb.addWorksheet('Export');
-
-    const headingColumnNames = Object.keys(content[0]);
-
-    let headingColumnIndex = 1;
-    headingColumnNames.forEach(heading => {
-      ws.cell(1, headingColumnIndex++)
-        .string(heading)
-    });
-
-    let rowIndex = 2;
-    data.forEach(record => {
-      let columnIndex = 1;
+    const current = new Date();
+    const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+    const fileExtension = '.xlsx';
+    content.forEach(record => {
       Object.keys(record).forEach(columnName => {
-        if (typeof record[columnName] === 'string' && record[columnName] !== null) {
-          ws.cell(rowIndex, columnIndex++)
-            .string(record[columnName])
-        } else if (typeof record[columnName] === 'object' && record[columnName] !== null) {
+        if (typeof record[columnName] === 'object' && record[columnName] !== null) {
           if ("id" in record[columnName]) {
-            console.log(columnName)
-            console.log(record[columnName].id)
-            ws.cell(rowIndex, columnIndex++)
-              .number(record[columnName].id)
+            record[columnName] = record[columnName].id
           }
-        } else if (typeof record[columnName] === 'number' && record[columnName] !== null) {
-          ws.cell(rowIndex, columnIndex++)
-            .number(record[columnName])
-        } else {
-          ws.cell(rowIndex, columnIndex++)
-            .string(record[columnName])
         }
-
-
       });
-      rowIndex++;
+
     });
-    wb.write(`${model.apiID}-${current.getTime()}.xlsx`);
+    const ws = XLSX.utils.json_to_sheet(content);
+    const wb = { Sheets: { 'data': ws }, SheetNames: ['data'] };
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: fileType });
+    FileSaver.saveAs(data, `${model.apiID}-${current.getTime()}` + fileExtension);
 
   };
 

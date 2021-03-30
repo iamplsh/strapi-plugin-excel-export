@@ -17,12 +17,21 @@ import { MainDiv } from './ui-components';
 
 // Content types to be included in the export panel
 const required_models = ["comments", "discussion", "organizations", "offerings", "investor", "users"];
-
+const user_model = {
+  "uid": "application::users.users",
+  "apiID": "users",
+  "schema" : {
+      "kind": "collectionType",
+      "name" : "Users"
+  }
+};
 const ExportPage = () => {
   const [models, setModels] = useState([]);
   useEffect(() => {
     async function loadContentTypes() {
       const allModels = await getModels();
+      allModels.push(user_model);
+      console.log(allModels);
       const models = allModels.filter(model => required_models.includes(model.apiID));
       setModels(models);
       console.log(models);
